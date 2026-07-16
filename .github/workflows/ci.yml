@@ -1,0 +1,42 @@
+# this workflow runs CI checks on all pushes and pull requests.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  push:
+
+name: "ci"
+jobs:
+  # run hadolint to lint the Dockerfile.
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout code
+        uses: actions/checkout@v7
+      -
+        name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
+  # build the Docker image to ensure it builds successfully.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout code
+        uses: actions/checkout@v7
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          platforms: linux/amd64,linux/arm64
+          tags: ghcr.io/eun/gh-cli-mcp:ci
