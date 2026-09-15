@@ -28,7 +28,7 @@ RUN mise run build
 # Stage 2: build mcp-cli (Node/TypeScript)
 # https://github.com/pyrex41/mcp-cli
 ########################################
-FROM node:20-bookworm-slim AS mcp-cli-builder
+FROM node:26-bookworm-slim AS mcp-cli-builder
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git ca-certificates \
@@ -41,7 +41,7 @@ RUN npm install && npm run build
 ########################################
 # Stage 3: final runtime image
 ########################################
-FROM node:20-bookworm-slim
+FROM node:26-bookworm-slim
 
 ARG GH_CLI_VERSION=2.96.0
 ENV DEBIAN_FRONTEND=noninteractive
