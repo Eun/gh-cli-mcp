@@ -14,15 +14,24 @@ ENV MISE_DATA_DIR=/root/.local/share/mise \
     PATH="/root/.local/bin:${PATH}" \
     CGO_ENABLED=0
 
+# `curl ... | sh` below needs pipefail so a failed download can't be masked by
+# a successful `sh`. Debian's default /bin/sh (dash) is not guaranteed to
+# support `-o pipefail`, so pin the shell to bash for this stage.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Versions are intentionally unpinned: Debian drops superseded packages from
+# the archive on every security update, so pinning these would break the build
+# rather than make it reproducible.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git ca-certificates curl \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL https://mise.run | sh
 
 WORKDIR /src
-RUN git clone --depth 1 https://github.com/Eun/gh-web-auth.git .
-RUN mise install
-RUN mise run build
+RUN git clone --depth 1 https://github.com/Eun/gh-web-auth.git . \
+    && mise install \
+    && mise run build
 
 ########################################
 # Stage 2: build mcp-cli (Node/TypeScript)
@@ -30,6 +39,7 @@ RUN mise run build
 ########################################
 FROM node:20-bookworm-slim AS mcp-cli-builder
 
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -52,6 +62,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # cli.github.com's separate apt repo or its GPG keyring. Node itself comes
 # from the base image, so there's nothing else to apt-install for the
 # runtime beyond curl/ca-certificates/tar to fetch and unpack the binary.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl ca-certificates tar git \
@@ -60,8 +71,8 @@ RUN apt-get update \
     && curl -fsSL -o /tmp/gh.tar.gz \
         "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_${arch}.tar.gz" \
     && tar -xzf /tmp/gh.tar.gz -C /tmp \
-    && install -m 0755 /tmp/gh_${GH_CLI_VERSION}_linux_${arch}/bin/gh /usr/local/bin/gh \
-    && rm -rf /tmp/gh.tar.gz /tmp/gh_${GH_CLI_VERSION}_linux_${arch} \
+    && install -m 0755 "/tmp/gh_${GH_CLI_VERSION}_linux_${arch}/bin/gh" /usr/local/bin/gh \
+    && rm -rf /tmp/gh.tar.gz "/tmp/gh_${GH_CLI_VERSION}_linux_${arch}" \
     && gh --version
 
 # ---- Bring in gh-web-auth (built in stage 1 via `mise run build`) ----
