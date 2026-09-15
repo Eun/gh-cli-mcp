@@ -15,7 +15,7 @@ ENV MISE_DATA_DIR=/root/.local/share/mise \
     CGO_ENABLED=0
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ca-certificates curl \
+    && apt-get install -y --no-install-recommends git ca-certificates curl git \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL https://mise.run | sh
 
