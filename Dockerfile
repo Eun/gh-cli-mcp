@@ -15,7 +15,7 @@ ENV MISE_DATA_DIR=/root/.local/share/mise \
     CGO_ENABLED=0
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ca-certificates curl git \
+    && apt-get install -y --no-install-recommends git ca-certificates curl \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL https://mise.run | sh
 
@@ -54,7 +54,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # runtime beyond curl/ca-certificates/tar to fetch and unpack the binary.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        curl ca-certificates tar \
+        curl ca-certificates tar git \
     && rm -rf /var/lib/apt/lists/* \
     && arch="$(dpkg --print-architecture)" \
     && curl -fsSL -o /tmp/gh.tar.gz \
